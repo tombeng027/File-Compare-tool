@@ -1,0 +1,11 @@
+
+#imagecontainer{
+    height:100vh;
+}
+#comparisonField{
+    height:100vh;
+}
+#pass1, #pass2{
+    height:50%;
+    overflow:scroll;
+}
