@@ -10,21 +10,31 @@
         <link rel="stylesheet" href="index.css">
     </head>
     <body>
-        <div id='imagecontainer' class='col-md-8'>ImageContainer</div>
+        <div id='imagecontainer' class='col-md-8'>
+            <img id='imgPreview' src="" alt="">
+        </div>
         <div id='comparisonField'class='col-md-4'>
         <div id='pass1'>
                 <div id='fieldlist1' class='list-group'>
-                        <a href="#" class='list-group-item list-group-item-action'>&#9660 Pass 1
+                        <a href="#" class='indicator list-group-item list-group-item-action'>&#9660 Pass 1
                         </a>
                 </div>
         </div>
         <div id='pass2'>
                 <div id='fieldlist2' class='list-group'>
-                        <a href="#" class='list-group-item list-group-item-action'>&#9660 Pass 2
+                        <a href="#" class='indicator list-group-item list-group-item-action'>&#9660 Pass 2
                         </a>
                 </div>
         </div>
         </div>
+        <div id='inputTextBox' hidden=true>TYPE CHANGES<textarea id="inputText" cols="10" rows="3"></textarea></div>
+        <div id='getNextBox' hidden=true>
+            <div id='getNextMsg'>No File</div>
+            <button id='getButton' class='btn btn-md btn-success'>Get Next Image?</button>
+        </div>
+        <!-- <div id='buttonBox'>
+            <button id='saveButton' class='btn btn-sm btn-success'>SAVE</button>
+        </div> -->
     </body>
     <script>
         require('jquery');

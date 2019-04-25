@@ -1,5 +1,30 @@
 {
-    "testinputimage":"C:/Users/nbriones/Documents/TASKS/December 2018/samp/payslip/pays1/images/test.jpg",
-    "testpass1":"C:/Users/nbriones/Documents/TASKS/December 2018/samp/payslip/pays1/outputs/test.xml",
-    "testpass2":"C:/Users/nbriones/Documents/TASKS/December 2018/samp/payslip/pays1/outputs/test.xml"
+    "imageFolder": "",
+    "pass1Folder": "pass-1",
+    "pass2Folder":"pass-2",
+    "outputFolder":"fc-output",
+    "extraDetail":"DISCREPANCY",
+    "exemptedTags":"_Annotation|Document_Id|Document_Type|Worker_Id",
+    "schemaIdentifier": "bpi",
+    "devmode":"false",
+    "onBPO":true,
+    "BPOqueries":{
+        "domain":"http://192.168.185.78",
+        "port":"8080",
+        "contextRoot":"bpo5",
+        "nodeID":"bpi-fileCompare",
+        "nextNodeID":"bpi-accuracy",
+        "getCurrentWorkload": "domain:port/contextroot/req/workers/workerid/nodes/nodeid/workload?sort=startproctime",
+        "getElement":"domain:port/contextroot/req/workers/workerid/nodes/nodeid/elements",
+        "completeElement":"domain:port/contextroot/req/workers/workerid/nodes/nodeid/elementid?nextNodeId=nextnode",
+        "completeInputJSON": {
+            "productionOutputUnits": {
+                "FIELD": {
+                    "outputCount": 0,
+                    "errorCount": 0
+                }
+            }
+        }
+    }
 }
+
