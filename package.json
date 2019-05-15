@@ -1,6 +1,6 @@
 {
   "name": "qa-tool",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "qa tool for data entry",
   "main": "./src/index.js",
   "scripts": {
@@ -36,6 +36,7 @@
   "dependencies": {
     "bootstrap": "^4.1.2",
     "jquery": "^3.3.1",
+    "moment": "^2.24.0",
     "tiff.js": "^1.0.0",
     "xml2js": "^0.4.19",
     "xmlbuilder": "^11.0.0",

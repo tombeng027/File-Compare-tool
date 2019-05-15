@@ -8,10 +8,10 @@ let configWindow;
 //window creation
 function createWindow(){
     mainWindow = new BrowserWindow({ minWidth:600, minHeight:600,width:1066, height:700, resizable:true, webPreferences: {
-        plugins: true
+      nodeIntegration:true, plugins: true
       }});
       loginWindow = new BrowserWindow({ parent:mainWindow, modal:true, width:350 , height:350, frame:false,
-      fullscreen:false, webPreferences: { plugins: true }})
+      fullscreen:false, webPreferences: { nodeIntegration:true, plugins: true }})
       loginWindow.loadFile('./src/app/sso/ssologin.html');
       loginWindow.setMenuBarVisibility(false);
       mainWindow.hide();
@@ -32,7 +32,9 @@ function createWindow(){
          mainWindow = null;
        }
      });
-     global.shared = {index:0,images:undefined,workerid:undefined};
+     global.shared = {index:0,images:undefined,workerid:undefined, 
+      outputFilePath:{QA:undefined,pass1:undefined,pass2:undefined},bpoElement:undefined
+      ,imageFileName:undefined,imageDone:false};
      global.mainWindow = mainWindow;
 }
 

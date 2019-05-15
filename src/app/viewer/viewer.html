@@ -3,17 +3,30 @@
     <head>
         <meta charset="utf-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>Preview Image</title>
+        <title>Preview Files</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <script src="../../assets/lib/jquery.min.js"></script>
         <link href="../../assets/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
         <link href="viewer.css" rel="stylesheet">
     </head>
     <body>
-        <div id="previewbox">
-            <div>
-                <img id="imgpreview" src="" alt="loading image please wait">
-            </div>
+        <div id='outputQA'>
+            <p class='h6'><Span class='badge badge-secondary'>QA Output XMLs</Span></p>
+            <ul id='fcFileList'>
+            </ul>
+        </div>
+        <div id='outputPass1'>
+            <p class='h6'><Span class='badge badge-secondary'>Pass1 XMLs</Span></p>
+            <ul id='pass1FileList'>
+            </ul>
+        </div>
+        <div id='outputPass2'>
+            <p class='h6'><Span class='badge badge-secondary'>Pass2 XMLs</Span></p>
+            <ul id='pass2FileList'>
+            </ul>
+        </div>
+        <div>
+            <button id='updateButton' class="btn btn-sm btn-success">Refresh</button>
         </div>
     </body>
     <script>

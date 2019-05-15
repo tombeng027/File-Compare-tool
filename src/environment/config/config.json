@@ -5,9 +5,12 @@
     "outputFolder":"fc-output",
     "extraDetail":"DISCREPANCY",
     "exemptedTags":"_Annotation|Document_Id|Document_Type|Worker_Id",
-    "schemaIdentifier": "bpi",
     "devmode":"false",
+    "AFIdentifier":"PD-APFR",
     "onBPO":true,
+    "GDERestClient":{
+        "schemaFolder": "http://192.168.185.78:8080/gde/rest/GDEService/schema/"
+    },
     "BPOqueries":{
         "domain":"http://192.168.185.78",
         "port":"8080",

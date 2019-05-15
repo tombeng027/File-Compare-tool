@@ -16,14 +16,10 @@
         <div id='comparisonField'class='col-md-4'>
         <div id='pass1'>
                 <div id='fieldlist1' class='list-group'>
-                        <a href="#" class='indicator list-group-item list-group-item-action'>&#9660 Pass 1
-                        </a>
                 </div>
         </div>
         <div id='pass2'>
                 <div id='fieldlist2' class='list-group'>
-                        <a href="#" class='indicator list-group-item list-group-item-action'>&#9660 Pass 2
-                        </a>
                 </div>
         </div>
         </div>
@@ -32,9 +28,15 @@
             <div id='getNextMsg'>No File</div>
             <button id='getButton' class='btn btn-md btn-success'>Get Next Image?</button>
         </div>
-        <!-- <div id='buttonBox'>
-            <button id='saveButton' class='btn btn-sm btn-success'>SAVE</button>
-        </div> -->
+        <div id='hiddenButtonHolder' hidden=true>
+                <div id='incorrectButtonDiv'>
+                        <button id='incorrectButton' class='btn btn-sm btn-danger'>Incorrect Document Type</button>
+                    </div>
+        </div>
+        <div id='validationBox' class='btn-group'>
+            <button id='checkFiles' class='btn bt-sm btn-info'>Check Outputs</button>
+            <button id='addOutput' class='btn bt-sm btn-primary'>Add Output</button>
+        </div>
     </body>
     <script>
         require('jquery');
