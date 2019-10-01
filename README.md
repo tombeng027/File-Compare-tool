@@ -1,2 +1,2 @@
-# qa-tool
+# File-Compare-tool
 file compare
