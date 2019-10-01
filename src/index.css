@@ -1,9 +1,20 @@
+body{
+    overflow: hidden;
+}
 #imagecontainer{
     border: 3px ridge grey;
     height:100vh;
     background-repeat: no-repeat;
     background-color: darkgrey;
     overflow: hidden;
+}
+#incorrectButton{
+    margin-left:30%;
+}
+#validationBox{
+    position: absolute;
+    bottom: 0;
+    left:0;
 }
 #comparisonField{
     border: 3px ridge grey;
