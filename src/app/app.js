@@ -1,4 +1,5 @@
 const { BrowserWindow } = require('electron').remote;
+const electron = require('electron');
 const remote = require('electron').remote;
 const path = require('path');
 const $ = require('jquery');
@@ -7,18 +8,23 @@ const xml2js = require('xml2js');
 const builder = require('xmlbuilder');
 
 var config =  JSON.parse(fs.readFileSync('./src/environment/config/config.json'));
-
-var imagecontainer = $('#imagecontainer');
-var pass1 = $('#pass1');
-var pass2 = $('#pass2');
-var fieldlist1 = $('#fieldlist1');
-var fieldlist2 = $('#fieldlist2');                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
-var inputTextBox = $('#inputTextBox');
-var inputText = $('#inputText');
-var image = $('#imgPreview');
-var getButton = $('#getButton');
-var getNextMsg = $('#getNextMsg');
-var getNextBox = $('#getNextBox');
+const body = $('#body');
+const imagecontainer = $('#imagecontainer');
+const pass1 = $('#pass1');
+const pass2 = $('#pass2');
+const fieldlist1 = $('#fieldlist1');
+const fieldlist2 = $('#fieldlist2');                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+const inputTextBox = $('#inputTextBox');
+const inputText = $('#inputText');
+const image = $('#imgPreview');
+const getButton = $('#getButton');
+const getNextMsg = $('#getNextMsg');
+const getNextBox = $('#getNextBox');
+const incorrectButtonDiv = $('#incorrectButtonDiv');
+const incorrectButton = $('#incorrectButton');
+const checkFilesButton = $('#checkFiles');
+const addOutputButton = $('#addOutput');
+const hiddenButtonHolder = $('#hiddenButtonHolder');
 var parser = new xml2js.Parser();
 //constants
 let nodeID = config.BPOqueries.nodeID;
@@ -29,15 +35,24 @@ let imageFolder = config.imageFolder;
 let pass1Folder = config.pass1Folder;
 let pass2Folder = config.pass2Folder;
 let outputFolder = config.outputFolder;
-let schemaIdentifier = config.schemaIdentifier;
 //variables
+let dataEntryWindow = null;
+let fileWindow = null;
 let workerid = remote.getGlobal('shared').workerid
+let xmlArray;
+let currentImage;
+let doctype;
+let pass2Selected = false;
+let selectedXML;
+let outputFileName;
 let images = [];
 let supportDocs = [];
 let pass1FileList = [];
 let pass2FileList = [];
 let discrepancies;
-let discrepanciesImageList = [];
+let pass1doctype;
+let pass2doctype;
+// let discrepanciesImageList = [];
 let discrepanciesXMLList = [];
 let completeFieldList = [];
 let discrepanciesFieldList;
@@ -72,23 +87,40 @@ async function initialize(){
     if(isEmpty(discrepancies)){
         copyFile();
     }else{
+        addViewerIndicators();
         getFields();
-        loadImage();
         loadPass1();
         loadPass2();
+        loadImage();
     }
+    hiddenButtonHolder.append(incorrectButtonDiv);
+    incorrectButton.on('click', async ()=>{
+        if(index == discrepanciesXMLList.length - 1){
+            await completeToNextNode();
+        }else{
+            index++;
+            getNextMsg.html('Done');
+            getButton.html('Get Next Image/File?');
+            getButton.off();
+            getButton.on('click',getNextImage);
+        }
+        getNextBox.show();
+    });
 }
 
 
-function copyFile(){
-    let dest = bpoElement.fileLocation + path.sep + outputFolder + path.sep + elementID + '.xml';
-    let src = bpoElement.fileLocation + path.sep + pass1Folder + path.sep + elementID + '.xml';
+async function copyFile(){
+    let dest = bpoElement.fileLocation + path.sep + outputFolder + path.sep + elementID + '_' + config.AFIdentifier + '.xml';
+    let src = bpoElement.fileLocation + path.sep + pass1Folder + path.sep + elementID + '_' + config.AFIdentifier + '.xml';
     fs.mkdir(bpoElement.fileLocation + path.sep + outputFolder, { recursive: true }, (err) => {
         if (err) throw err;
-      });0
-    fs.copyFileSync(src,dest);
-    completeToNextNode();
-    initialize();
+      });
+    // fs.copyFileSync(src,dest);
+    fs.copyFile(src, dest, (err) => {
+        if (err) throw err;
+      });
+    await completeToNextNode();
+    incorrectButton.off();
 }
 
 async function getElement(){
@@ -111,8 +143,9 @@ async function getElement(){
                         }else{
                             getNextMsg.html('No Existing Elements in Node');
                             getButton.html('Get Next Element?')
-                            getNextBox.show();
+                            getButton.off();
                             getButton.on('click',getNextElement);
+                            getNextBox.show();
                         }
                 });
         });
@@ -145,15 +178,15 @@ async function getElement(){
         });
     });
     for(let i in discrepancies){
-        discrepanciesImageList.push(i.replace('.xml','.' + images[index].split('.').pop()));
+        // discrepanciesImageList.push(i.replace('.xml','.' + images[index].split('.').pop()));
         discrepanciesXMLList.push(i);
     }
     await new Promise((resolve)=>{
         fs.readdir(bpoElement.fileLocation + path.sep + pass1Folder, (err,dir) => {
         for(let i in dir){
-            if(discrepanciesXMLList.includes(dir[i])){
-                pass1FileList.push((bpoElement.fileLocation + path.sep + pass1Folder 
-                    + path.sep + dir[i]).replace(/\\/g, "/"));
+            for(let key in discrepanciesXMLList){
+                    pass1FileList.push((bpoElement.fileLocation + path.sep + pass1Folder 
+                        + path.sep + dir[i]).replace(/\\/g, "/"));
             }
         }
         if(err != null) alert(err);
@@ -163,17 +196,20 @@ async function getElement(){
     await new Promise((resolve)=>{
         fs.readdir(bpoElement.fileLocation + path.sep + pass2Folder, (err,dir) => {
         for(let i in dir){
-            if(discrepanciesXMLList.includes(dir[i])){
-                pass2FileList.push((bpoElement.fileLocation + path.sep + pass2Folder 
-                    + path.sep + dir[i]).replace(/\\/g, "/"));
+            for(let key in discrepanciesXMLList){
+                    pass2FileList.push((bpoElement.fileLocation + path.sep + pass2Folder 
+                        + path.sep + dir[i]).replace(/\\/g, "/"));
             }
         }
         if(err != null) alert(err);
             resolve();
         });
     });
+    discrepanciesXMLList.sort();
+    pass1FileList.sort();
+    pass2FileList.sort();
 }
-//check is extradetails is empty
+//check if extradetails is empty
 function isEmpty(obj) {
     for(var key in obj) {
         if(obj.hasOwnProperty(key))
@@ -200,10 +236,17 @@ function clearElement(){
     pass1FileList = [];
     pass2FileList = [];
     discrepanciesImageList = [];
+    completeFieldList = [];
     discrepanciesXMLList = [];
     discrepanciesFieldList = null;
     discrepancies = null;
-    image.attr('src', null);
+    doctype = undefined;
+    currentImage = undefined;
+    pass1doctype = undefined;
+    pass2doctype = undefined;
+    outputFileName = undefined;
+    image.attr('src',null);
+    imagecontainer.css('background-image', '');
     imagecontainer.css('background-position','0px 0px');
     index = 0;
     supportIndex = 0;
@@ -211,227 +254,309 @@ function clearElement(){
 
 function clearCurrentImage(){
     completeFieldList = [];
+    outputFileName = undefined;
+    doctype = undefined;
+    currentImage = undefined;
+    pass1doctype = undefined;
+    pass2doctype = undefined;
     image.attr('src',null);
+    imagecontainer.css('background-image', '');
     fieldlist1.empty();
     fieldlist2.empty();
 }
 
 function getFields(){
+    let output;
         discrepanciesFieldList = (discrepancies[discrepanciesXMLList[index]]).split(/\|/);  
+        try{
+            if(fs.existsSync(bpoElement.fileLocation + path.sep + pass1Folder + path.sep + discrepanciesXMLList[index].split('\|')[0])){
+                output = fs.readFileSync(bpoElement.fileLocation + path.sep + pass1Folder + path.sep + discrepanciesXMLList[index].split('\|')[0],'ascii');
+            }else{
+                output = fs.readFileSync(bpoElement.fileLocation + path.sep + pass2Folder + path.sep + discrepanciesXMLList[index].split('\|')[0],'ascii');
+            }
+        
+        }catch(err){
+            alert(err)
+        }
+        parser.parseString(output.substring(0, output.length), function (err, result) {
+            json = result;
+            currentImage = json.xml['Document_Id'][0];
+            doctype = json.xml['Document_Type'][0];
+        }); 
 }
 
 function loadPass1(){
+    if(fs.existsSync(bpoElement.fileLocation + path.sep + pass1Folder 
+        + path.sep + discrepanciesXMLList[index].split('\|')[0])){
+                if(config.onBPO){
+                    try{
+                        output = fs.readFileSync(bpoElement.fileLocation + path.sep + pass1Folder + path.sep + discrepanciesXMLList[index].split('\|')[0],'ascii');
+                    }catch(err){
+                        alert(err)
+                    }
+                }else{
+                    try{
+                        output = fs.readFileSync(config.testpass1,'ascii');
+                    }catch(err){
+                        alert(err)
+                    }
+                }
+        createInputsPass1(output);
+    }else if(fs.existsSync(bpoElement.fileLocation + path.sep + pass1Folder 
+        + path.sep + discrepanciesXMLList[index].split('\|')[1])){
+            if(config.onBPO){
+                try{
+                    output = fs.readFileSync(bpoElement.fileLocation + path.sep + pass1Folder + path.sep + discrepanciesXMLList[index].split('\|')[1],'ascii');
+                }catch(err){
+                    alert(err)
+                }
+            }else{
+                try{
+                    output = fs.readFileSync(config.testpass1,'ascii');
+                }catch(err){
+                    alert(err)
+                }
+            }
+        createInputsPass1(output);
+    }else{
+        pass1.append(incorrectButtonDiv);
+    }      
+}
+
+function createInputsPass1(output){
+        parser.parseString(output.substring(0, output.length), function (err, result) {
+            json = result;
+        }); 
+       for(let i in json.xml){
+            let included = false;
+            let exTags = config.exemptedTags.split(/\|/);
+                for(let skip in exTags){
+                    if(!i.includes(exTags[skip])){
+                        included = true;
+                        continue;
+                    }else{
+                        included = false;
+                        break;
+                    }
+                }
+                if(included){
+                    completeFieldList.push(i);
+                    let  field = document.createElement('div');
+                    field.setAttribute('id',i + 'div1');
+                    field.setAttribute('class', "list-group-item fieldvalue");
+                    field.setAttribute('style','display:table;width:100%');
+                    let fieldInfo = document.createElement('div');
+                        fieldInfo.setAttribute('class','fieldInfo');
+                    let fieldName = document.createElement('label');
+                    fieldName.setAttribute('class', "form-check-label");
+                    fieldName.setAttribute('for',i+'check1');
+                    fieldName.append(i+' : ');
+                    fieldInfo.append(fieldName);
+                    let fieldValue = document.createElement('span');
+                    fieldValue.setAttribute('class','form-check-label');
+                    fieldValue.setAttribute('id',i+'value1');
+                    let capturedData = json.xml[i][0];
+                    fieldValue.setAttribute('data-captured',capturedData);
+                    fieldValue.append(capturedData.replace(/ /g,'\xa0'));
+                    fieldInfo.append(fieldValue);
+                    field.append(fieldInfo);
+                    let fieldInputs = document.createElement('span');
+                    fieldInputs.setAttribute('class','fieldInputs');
+                    fieldInputs.setAttribute('type','text');
+                    let fieldChangeButton = document.createElement('button');
+                    fieldChangeButton.setAttribute('class','btn btn-sm btn-secondary textchange');
+                    fieldChangeButton.setAttribute('id',i+'changeButton1');
+                    fieldChangeButton.innerHTML = "CHANGE";
+                    fieldInputs.append(fieldChangeButton);
+                    fieldChangeButton.addEventListener('click',async ()=>{
+                        let val = $('#'+i+'value1').attr('data-captured');
+                        // inputText.val(val.replace(/&nbsp;/g," "));
+                        inputText.val(val);
+                        inputTextBox.show();
+                        inputText.focus();
+                        inputText.on('keyup',(e)=>{
+                            if(e.keyCode == 13){
+                                if(keydown_control){
+                                    fieldValue.setAttribute('data-captured',inputText.val());
+                                    fieldValue.innerHTML = inputText.val().replace(/ /g,'\xa0');
+                                    inputText.off().blur();
+                                    if(!fieldInputCheckBox.checked)fieldInputCheckBox.click();
+                                    inputTextBox.hide();
+                                }
+                            }else if(e.key == 'Escape'){
+                                inputText.off().blur();
+                                inputTextBox.hide();
+                            }
+                        });
+                    });
+                    let fieldInputCheckBox = document.createElement('input');
+                    fieldInputCheckBox.setAttribute('class',"form-check-input");
+                    fieldInputCheckBox.setAttribute('type','checkbox');
+                    fieldInputCheckBox.setAttribute('id',i+'check1');
+                    fieldInputCheckBox.setAttribute('style','float:right');
+                    fieldInputCheckBox.addEventListener('click',()=>{
+                        if(fieldInputCheckBox.checked){
+                            $('#'+i+'check2').attr('disabled',true);
+                        }else{
+                            $('#'+i+'check2').attr('disabled',false);
+                        }
+                    });
+                    fieldInputs.append(fieldInputCheckBox);
+                    if(discrepanciesFieldList != "" & !discrepanciesFieldList.includes(i)){
+                        field.setAttribute('style','display:none');
+                    }
+                    field.append(fieldInputs);
+                    fieldlist1.append(field);
+                    fieldName.addEventListener('click',(e)=>{e.stopPropagation();});
+                    fieldInputs.addEventListener('click',(e)=>{e.stopPropagation();});
+                    field.addEventListener('click',()=>{
+                        fieldInputCheckBox.click();
+                    });
+                }
+       }  
+}
+
+function loadPass2(){
+    if(fs.existsSync(bpoElement.fileLocation + path.sep + pass2Folder + path.sep + discrepanciesXMLList[index].split('\|')[0])){
         if(config.onBPO){
             try{
-                output = fs.readFileSync(pass1FileList[index],'ascii');
+                output = fs.readFileSync(bpoElement.fileLocation + path.sep + pass2Folder + path.sep + discrepanciesXMLList[index].split('\|')[0],'ascii');
+            }catch(err){
+                alert(err)
+            }
+        }else{
+            //testing using local data
+            try{
+                output = fs.readFileSync(config.testpass2,'ascii');
+            }catch(err){
+                alert(err)
+            }
+        }
+        createInputsPass2(output);
+    }else if(fs.existsSync(bpoElement.fileLocation + path.sep + pass2Folder + path.sep + discrepanciesXMLList[index].split('\|')[1])){
+        if(config.onBPO){
+            try{
+                output = fs.readFileSync(bpoElement.fileLocation + path.sep + pass2Folder + path.sep + discrepanciesXMLList[index].split('\|')[1],'ascii');
             }catch(err){
                 alert(err)
             }
         }else{
             try{
-                output = fs.readFileSync(config.testpass1,'ascii');
+                output = fs.readFileSync(config.testpass2,'ascii');
             }catch(err){
                 alert(err)
             }
         }
-        parser.parseString(output.substring(0, output.length), function (err, result) {
-            json = result;
-        }); 
-           for(let i in json.xml){
-                let included = false;
-                let exTags = config.exemptedTags.split(/\|/);
-                    for(let skip in exTags){
-                        if(!i.includes(exTags[skip])){
-                            included = true;
-                            continue;
-                        }else{
-                            included = false;
-                            break;
-                        }
-                    }
-                    if(included){
-                        completeFieldList.push(i);
-                        let  field = document.createElement('div');
-                        field.setAttribute('id',i + 'div1');
-                        field.setAttribute('class', "list-group-item fieldvalue");
-                        field.setAttribute('style','display:table;width:100%');
-                        let fieldInfo = document.createElement('div');
-                            fieldInfo.setAttribute('class','fieldInfo');
-                        let fieldName = document.createElement('label');
-                        fieldName.setAttribute('class', "form-check-label");
-                        fieldName.setAttribute('for',i+'check1');
-                        fieldName.append(i+' : ');
-                        fieldInfo.append(fieldName);
-                        let fieldValue = document.createElement('span');
-                        fieldValue.setAttribute('class','form-check-label');
-                        fieldValue.setAttribute('id',i+'value1');
-                        fieldValue.append(json.xml[i][0]);
-                        fieldInfo.append(fieldValue);
-                        field.append(fieldInfo);
-                        let fieldInputs = document.createElement('span');
-                        fieldInputs.setAttribute('class','fieldInputs');
-                        fieldInputs.setAttribute('type','text');
-                        let fieldChangeButton = document.createElement('button');
-                        fieldChangeButton.setAttribute('class','btn btn-sm btn-secondary textchange');
-                        fieldChangeButton.setAttribute('id',i+'changeButton1');
-                        fieldChangeButton.innerHTML = "CHANGE";
-                        fieldInputs.append(fieldChangeButton);
-                        fieldChangeButton.addEventListener('click',()=>{
-                            inputText.val($('#'+i+'value1').html());
-                            inputTextBox.show();
-                            inputText.focus();
-                            inputText.on('keyup',(e)=>{
-                                if(e.keyCode == 13){
-                                    if(keydown_control){
-                                        fieldValue.innerHTML = inputText.val();
-                                        inputText.off().blur();
-                                        if(!fieldInputCheckBox.checked)fieldInputCheckBox.click();
-                                        inputTextBox.hide();
-                                    }
-                                }else if(e.key == 'Escape'){
-                                    inputText.off().blur();
-                                    inputTextBox.hide();
-                                }
-                            });
-                        });
-                        let fieldInputCheckBox = document.createElement('input');
-                        fieldInputCheckBox.setAttribute('class',"form-check-input");
-                        fieldInputCheckBox.setAttribute('type','checkbox');
-                        fieldInputCheckBox.setAttribute('id',i+'check1');
-                        fieldInputCheckBox.setAttribute('style','float:right');
-                        fieldInputCheckBox.addEventListener('click',()=>{
-                            if(fieldInputCheckBox.checked){
-                                $('#'+i+'check2').attr('disabled',true);
-                            }else{
-                                $('#'+i+'check2').attr('disabled',false);
-                            }
-                        });
-                        fieldInputs.append(fieldInputCheckBox);
-                        if(!discrepanciesFieldList.includes(i)){
-                            field.setAttribute('style','display:none');
-                        }
-                        field.append(fieldInputs);
-                        fieldlist1.append(field);
-                        fieldName.addEventListener('click',(e)=>{e.stopPropagation();});
-                        fieldInputs.addEventListener('click',(e)=>{e.stopPropagation();});
-                        field.addEventListener('click',()=>{
-                            fieldInputCheckBox.click();
-                        });
-                    }
-           }
+        createInputsPass2(output);
+    }else{
+        pass2.append(incorrectButtonDiv);
+    } 
 }
 
-function loadPass2(){
-    if(config.onBPO){
-        try{
-            output = fs.readFileSync(pass2FileList[index],'ascii');
-        }catch(err){
-            alert(err)
-        }
-    }else{
-        try{
-            output = fs.readFileSync(config.testpass2,'ascii');
-        }catch(err){
-            alert(err)
-        }
-    }
+function createInputsPass2(output){
     parser.parseString(output.substring(0, output.length), function (err, result) {
         json = result;
     });        
     for(let i in json.xml){
         let included = false;
         let exTags = config.exemptedTags.split(/\|/);
-            for(let skip in exTags){
-                if(!i.includes(exTags[skip])){
-                    included = true;
-                    continue;
-                }else{
-                    included = false;
-                    break;
-                }
+        for(let skip in exTags){
+            if(!i.includes(exTags[skip])){
+                included = true;
+                continue;
+            }else{
+                included = false;
+                break;
             }
-            if(included){
-                let  field = document.createElement('div');
-                field.setAttribute('id',i + 'div2');
-                field.setAttribute('class', "list-group-item list-group-item-action");
-                let fieldInfo = document.createElement('div');
-                    fieldInfo.setAttribute('class','fieldInfo');
-                let fieldName = document.createElement('label');
-                        fieldName.setAttribute('class', "form-check-label");
-                        fieldName.setAttribute('for',i+'check2');
-                        fieldName.append(i+' : ');
-                        fieldInfo.append(fieldName);
-                        let fieldValue = document.createElement('span');
-                        fieldValue.setAttribute('class','form-check-label');
-                        fieldValue.setAttribute('id',i+'value2');
-                        fieldValue.append(json.xml[i][0]);
-                        fieldInfo.append(fieldValue);
-                field.append(fieldInfo);
-                let fieldInputs = document.createElement('span');
-                    fieldInputs.setAttribute('class','fieldInputs');
-                    fieldInputs.setAttribute('type','text');
-                let fieldChangeButton = document.createElement('button');
-                    fieldChangeButton.setAttribute('class','btn btn-sm btn-secondary textchange');
-                    fieldChangeButton.setAttribute('id',i+'changeButton2');
-                    fieldChangeButton.addEventListener('click',()=>{
-                        inputText.val($('#'+i+'value2').html());
-                        inputTextBox.show();
-                        inputText.focus();
-                        inputText.on('keyup',(e)=>{
-                                if(e.keyCode == 13){
-                                    if(keydown_control){
-                                        fieldValue.innerHTML = inputText.val();
-                                        inputText.off().blur();
-                                        if(!fieldInputCheckBox.checked)fieldInputCheckBox.click();
-                                        inputTextBox.hide();
-                                        return false;
-                                    }
-                                }else if(e.key == 'Escape'){
+        }
+        if(included){
+            let  field = document.createElement('div');
+            field.setAttribute('id',i + 'div2');
+            field.setAttribute('class', "list-group-item list-group-item-action");
+            let fieldInfo = document.createElement('div');
+                fieldInfo.setAttribute('class','fieldInfo');
+            let fieldName = document.createElement('label');
+                    fieldName.setAttribute('class', "form-check-label");
+                    fieldName.setAttribute('for',i+'check2');
+                    fieldName.append(i+' : ');
+                    fieldInfo.append(fieldName);
+                    let fieldValue = document.createElement('span');
+                    fieldValue.setAttribute('class','form-check-label');
+                    fieldValue.setAttribute('id',i+'value2');
+                    let capturedData = json.xml[i][0];
+                    fieldValue.setAttribute('data-captured',capturedData);
+                    fieldValue.append(json.xml[i][0].replace(/ /g,'\xa0'));
+                    fieldInfo.append(fieldValue);
+            field.append(fieldInfo);
+            let fieldInputs = document.createElement('span');
+                fieldInputs.setAttribute('class','fieldInputs');
+                fieldInputs.setAttribute('type','text');
+            let fieldChangeButton = document.createElement('button');
+                fieldChangeButton.setAttribute('class','btn btn-sm btn-secondary textchange');
+                fieldChangeButton.setAttribute('id',i+'changeButton2');
+                fieldChangeButton.addEventListener('click',()=>{
+                    let val = $('#'+i+'value2').attr('data-captured');
+                    inputText.val(val);
+                    inputTextBox.show();
+                    inputText.focus();
+                    inputText.on('keyup',(e)=>{
+                            if(e.keyCode == 13){
+                                if(keydown_control){
+                                    fieldValue.setAttribute('data-captured',inputText.val());
+                                    fieldValue.innerHTML = inputText.val().replace(/ /g,'\xa0');
                                     inputText.off().blur();
+                                    if(!fieldInputCheckBox.checked)fieldInputCheckBox.click();
                                     inputTextBox.hide();
+                                    return false;
                                 }
-                        });
+                            }else if(e.key == 'Escape'){
+                                inputText.off().blur();
+                                inputTextBox.hide();
+                            }
                     });
-                    fieldChangeButton.innerHTML = "CHANGE";
-                    fieldInputs.append(fieldChangeButton);
-                let fieldInputCheckBox = document.createElement('input');
-                    fieldInputCheckBox.setAttribute('class',"form-check-input");
-                    fieldInputCheckBox.setAttribute('type','checkbox');
-                    fieldInputCheckBox.setAttribute('id',i+'check2');
-                    fieldInputCheckBox.setAttribute('style','float:right');
-                    fieldInputCheckBox.addEventListener('click',()=>{
-                    if(fieldInputCheckBox.checked){
-                        $('#'+i+'check1').attr('disabled',true);
-                    }else{
-                        $('#'+i+'check1').attr('disabled',false);
-                    }
                 });
-                fieldInputs.append(fieldInputCheckBox);
-                if(!discrepanciesFieldList.includes(i)){
-                    field.setAttribute('style','display:none');
+                fieldChangeButton.innerHTML = "CHANGE";
+                fieldInputs.append(fieldChangeButton);
+            let fieldInputCheckBox = document.createElement('input');
+                fieldInputCheckBox.setAttribute('class',"form-check-input");
+                fieldInputCheckBox.setAttribute('type','checkbox');
+                fieldInputCheckBox.setAttribute('id',i+'check2');
+                fieldInputCheckBox.setAttribute('style','float:right');
+                fieldInputCheckBox.addEventListener('click',()=>{
+                if(fieldInputCheckBox.checked){
+                    $('#'+i+'check1').attr('disabled',true);
+                }else{
+                    $('#'+i+'check1').attr('disabled',false);
                 }
-                field.append(fieldInputs);
-                fieldlist2.append(field);
-                fieldName.addEventListener('click',(e)=>{e.stopPropagation();});
-                fieldInputs.addEventListener('click',(e)=>{e.stopPropagation();});
-                field.addEventListener('click',()=>{
-                    fieldInputCheckBox.click();
-                });
-           }
+            });
+            fieldInputs.append(fieldInputCheckBox);
+            if(discrepanciesFieldList != "" & !discrepanciesFieldList.includes(i)){
+                field.setAttribute('style','display:none');
+            }
+            field.append(fieldInputs);
+            fieldlist2.append(field);
+            fieldName.addEventListener('click',(e)=>{e.stopPropagation();});
+            fieldInputs.addEventListener('click',(e)=>{e.stopPropagation();});
+            field.addEventListener('click',()=>{
+                fieldInputCheckBox.click();
+            });
        }
+   }
 }
+
 function loadImage(){
-    fileExtension = images[index].split('.').pop();
+    fileExtension = currentImage.split('.').pop();
     imagecontainer.css('background-position','0px 0px');
+    let imageSrc = bpoElement.fileLocation + '/' + currentImage;
     if( fileExtension == "jpg"){
-            image.attr('src', images[index]);
+            image.attr('src', imageSrc);
             imagecontainer.css('background-image','url("'+ image.attr('src') +'")');
             image.on('load',()=>{
                 imagecontainer.css('background-size', image.get(0).naturalWidth 
                                 + 'px ' + image.get(0).naturalHeight + 'px');
             });
     }else if(fileExtension == "tif"){
-            let tiffile = images[index];
+            let tiffile = imageSrc;
             let tifinput = fs.readFileSync(tiffile);
             tifimg = new Tiff({buffer:tifinput});
             let tifdataurl = tifimg.toCanvas().toDataURL();
@@ -441,53 +566,133 @@ function loadImage(){
     }
 }
 
-function loadSupportingImage(){
-    fileExtension = supportDocs[supportIndex].split('.').pop();
-    imagecontainer.css('background-position','0px 0px');
-    if( fileExtension == "jpg"){
-            // image.attr('src', supportDocs[supportIndex]);
-            imagecontainer.css('background-image','url("'+ supportDocs[supportIndex] +'")');
-    }else if(fileExtension == "tif"){
-            let tiffile = supportDocs[supportIndex];
-            let tifinput = fs.readFileSync(tiffile);
-            let tifimg = new Tiff({buffer:tifinput});
-            let tifdataurl = tifimg.toCanvas().toDataURL();
-            imagecontainer.css('background-image','url("'+ tifdataurl +'")');
-            // image.attr('src', tifdataurl);
-    }
-}
+// function loadSupportingImage(){
+//     fileExtension = supportDocs[supportIndex].split('.').pop();
+//     imagecontainer.css('background-position','0px 0px');
+//     if( fileExtension == "jpg"){
+//             // image.attr('src', supportDocs[supportIndex]);
+//             imagecontainer.css('background-image','url("'+ supportDocs[supportIndex] +'")');
+//     }else if(fileExtension == "tif"){
+//             let tiffile = supportDocs[supportIndex];
+//             let tifinput = fs.readFileSync(tiffile);
+//             let tifimg = new Tiff({buffer:tifinput});
+//             let tifdataurl = tifimg.toCanvas().toDataURL();
+//             imagecontainer.css('background-image','url("'+ tifdataurl +'")');
+//             // image.attr('src', tifdataurl);
+//     }
+// }
 
-function checkIfAllDone(){
+async function checkIfAllDone(){
     let imageDone = true;
-    for(let i in discrepanciesFieldList){
-        // if(discrepanciesFieldList[i] == 'Worker_Id')continue;
-            if($('#'+discrepanciesFieldList[i]+'check1').prop('checked') == 
-                $('#'+discrepanciesFieldList[i]+'check2').prop('checked')){
-                    $('#'+discrepanciesFieldList[i]+'check1').css('outline','2px solid rgb(252, 107, 97)');
-                    $('#'+discrepanciesFieldList[i]+'check2').css('outline','2px solid rgb(252, 107, 97)');
-                    setTimeout(()=>{
-                        $('#'+discrepanciesFieldList[i]+'check1').css('outline','0 none rgb(51, 51, 51)');
-                        $('#'+discrepanciesFieldList[i]+'check2').css('outline','0 none rgb(51, 51, 51)');
-                    },5000);
-                imageDone = false;
+    if(discrepanciesXMLList[index].split('\|').length == 1 & discrepanciesFieldList != ""){
+        for(let i in discrepanciesFieldList){
+            // if(discrepanciesFieldList[i] == 'Worker_Id')continue;
+                if($('#'+discrepanciesFieldList[i]+'check1').prop('checked') == 
+                    $('#'+discrepanciesFieldList[i]+'check2').prop('checked')){
+                        $('#'+discrepanciesFieldList[i]+'check1').css('outline','2px solid rgb(252, 107, 97)');
+                        $('#'+discrepanciesFieldList[i]+'check2').css('outline','2px solid rgb(252, 107, 97)');
+                        setTimeout(()=>{
+                            $('#'+discrepanciesFieldList[i]+'check1').css('outline','0 none rgb(51, 51, 51)');
+                            $('#'+discrepanciesFieldList[i]+'check2').css('outline','0 none rgb(51, 51, 51)');
+                        },5000);
+                    imageDone = false;
+                }
+        }            
+    }else{
+        let tempXml;
+        let json;
+        if(pass2Selected){
+            if(fs.existsSync(bpoElement.fileLocation + path.sep + pass2Folder + path.sep + discrepanciesXMLList[index].split('\|')[0])){   
+               tempXml = fs.readFileSync(bpoElement.fileLocation + path.sep + pass2Folder + path.sep + discrepanciesXMLList[index].split('\|')[0],'ascii');
+            }else{
+                tempXml = fs.readFileSync(bpoElement.fileLocation + path.sep + pass2Folder + path.sep + discrepanciesXMLList[index].split('\|')[1],'ascii');
             }
+        }else{
+            if(fs.existsSync(bpoElement.fileLocation + path.sep + pass1Folder + path.sep + discrepanciesXMLList[index].split('\|')[0])){
+                tempXml = fs.readFileSync(bpoElement.fileLocation + path.sep + pass1Folder + path.sep + discrepanciesXMLList[index].split('\|')[0],'ascii');
+            }else{
+                tempXml = fs.readFileSync(bpoElement.fileLocation + path.sep + pass1Folder + path.sep + discrepanciesXMLList[index].split('\|')[1],'ascii');
+            }
+        }
+        await parser.parseString(tempXml.substring(0, tempXml.length), function (err, result) {
+            json = result;
+            if(err != null)alert(err);
+        });
+        for(let i in json.xml){
+            let included = false;
+            let exTags = config.exemptedTags.split(/\|/);
+            for(let skip in exTags){
+                if(!i.includes(exTags[skip])){
+                    included = true;
+                    continue;
+                }else{
+                    if(exTags[skip].includes('_Annotation')){
+                        included=true; 
+                        break;
+                    }
+                    included = false;
+                    break;
+                }
+            }
+            if(included){
+                if(pass2Selected){
+                    check = 'check2';
+                }else{
+                    check = 'check1';
+                }
+                if($('#'+i+check).prop('checked') == false){
+                    $('#'+i+check).css('outline','2px solid rgb(252, 107, 97)');
+                    setTimeout(()=>{
+                        $('#'+i+check).css('outline','0 none rgb(51, 51, 51)');
+                    },3000);
+                    imageDone = false;
+                }
+            }
+        }
+        if(discrepanciesXMLList[index].split('\|').length != 1){
+            if(outputFileName == undefined || doctype == undefined){
+                imageDone = false;
+                $('#indicator1').css('outline','2px solid rgb(252, 107, 97)');
+                $('#indicator2').css('outline','2px solid rgb(252, 107, 97)');
+                setTimeout(()=>{
+                    $('#indicator1').css('outline','0 none rgb(51, 51, 51)');
+                    $('#indicator2').css('outline','0 none rgb(51, 51, 51)');
+                },3000);
+            }
+        }
     }
     if(imageDone){
-        saveOutput();
+        await saveOutput();
+        imageDone = false;
     }
 }
 
-function saveOutput(){
+async function saveOutput(){
     let data = {};
     let doc = builder.create('xml');
-    let copyOfInput = fs.readFileSync(pass1FileList[index],'ascii');
-    parser.parseString(copyOfInput.substring(0, copyOfInput.length), function (err, result) {
+    let inputJSON;
+    if(pass2Selected){
+        if(fs.existsSync(bpoElement.fileLocation + path.sep + pass2Folder + path.sep + discrepanciesXMLList[index].split('\|')[0])){
+            inputJSON = fs.readFileSync(bpoElement.fileLocation + path.sep + pass2Folder + path.sep + discrepanciesXMLList[index].split('\|')[0],'ascii');
+        }else{
+            inputJSON = fs.readFileSync(bpoElement.fileLocation + path.sep + pass2Folder + path.sep + discrepanciesXMLList[index].split('\|')[1],'ascii');
+        }
+    }else{
+        if(fs.existsSync(bpoElement.fileLocation + path.sep + pass1Folder + path.sep + discrepanciesXMLList[index].split('\|')[0])){
+            inputJSON = fs.readFileSync(bpoElement.fileLocation + path.sep + pass1Folder + path.sep + discrepanciesXMLList[index].split('\|')[0],'ascii');
+        }else{
+            inputJSON = fs.readFileSync(bpoElement.fileLocation + path.sep + pass1Folder + path.sep + discrepanciesXMLList[index].split('\|')[1],'ascii');
+        }
+    }
+    let documentId;
+    parser.parseString(inputJSON.substring(0, inputJSON.length), function (err, result) {
         json = result;
+        documentId = json.xml['Document_Id'][0];
     });
     doc.ele('Document_Id')
-        .txt(discrepanciesImageList[index]).up();
+        .txt(documentId).up();
     doc.ele('Document_Type')
-        .txt(elementID.substring(0,4)).up();
+        .txt(doctype.toString()).up();
     doc.ele('Worker_Id')
         .txt(workerid);
         for(let i in json.xml){
@@ -510,10 +715,10 @@ function saveOutput(){
                     if(discrepanciesFieldList.includes(i)){
                         if($('#'+i+"check1").prop('checked')){
                             doc.ele(i)
-                            .txt($('#'+i+'value1').html()).up();
+                            .txt($('#'+i+'value1').attr('data-captured')).up();
                         }else{
                             doc.ele(i)
-                            .txt($('#'+i+'value2').html()).up();
+                            .txt($('#'+i+'value2').attr('data-captured')).up();
                         }
                     }else{
                         doc.ele(i)
@@ -524,64 +729,160 @@ function saveOutput(){
         if(!fs.existsSync(bpoElement.fileLocation + path.sep + outputFolder)){
             fs.mkdirSync(bpoElement.fileLocation + path.sep + outputFolder, { recursive: true });
         }
-        fs.writeFileSync(bpoElement.fileLocation + path.sep + outputFolder + path.sep + bpoElement.elementId + ".xml",  doc.toString( { pretty : true }), function(err){
+
+        fs.writeFileSync(bpoElement.fileLocation + path.sep + outputFolder + path.sep + outputFileName,  doc.toString( { pretty : true }), function(err){
             if(err) throw err;
         });
-        let src = bpoElement.fileLocation + path.sep + outputFolder + path.sep + bpoElement.elementId + ".xml";
-        let dest = bpoElement.fileLocation + path.sep + bpoElement.elementId + ".xml";
-        fs.copyFileSync(src,dest);
-        if(index == discrepanciesImageList.length - 1){
-            getButton.html('Get Next Element?');
-            getNextMsg.html('Element Done');
-            completeToNextNode();
-            getButton.on('click',getNextElement);
+        if(outputFileName.split('_').pop() == config.AFIdentifier + ".xml"){
+            let src = bpoElement.fileLocation + path.sep + outputFolder + path.sep + outputFileName;
+            let dest = bpoElement.fileLocation + path.sep + outputFileName;
+            // fs.copyFileSync(src,dest);
+            // destination.txt will be created or overwritten by default.
+            fs.copyFile(src, dest, (err) => {
+                if (err) throw err;
+              });
+        }
+        if(index == discrepanciesXMLList.length - 1){
+            // if(discrepanciesXMLList.length == ){
+
+            // }
+           await completeToNextNode();
         }else{
+            index++;
             getNextMsg.html('Done');
             getButton.html('Get Next Image/File?');
+            getButton.off();
             getButton.on('click',getNextImage);
         }
+        hiddenButtonHolder.append(incorrectButtonDiv);
         getNextBox.show();
 }
 
-function getNextImage(){
-    index++;
-    clearCurrentImage();
-    addViewerIndicators();
-    getFields();
+async function getNextImage(){
+    getNextBox.hide();
+    getButton.off();
+    await clearCurrentImage();
+    await addViewerIndicators();
+    await getFields();   
     loadImage();
     loadPass1();
     loadPass2();
-    getNextBox.hide();
-    getButton.off();
 }
 
 function addViewerIndicators(){
+    xmlArray = discrepanciesXMLList[index].split('\|');
+    let pass1xml;
+    let pass2xml;
+        if(xmlArray.length > 1){
+            pass1xml = parser.parseString(fs.readFileSync(bpoElement.fileLocation + path.sep + pass1Folder + path.sep + xmlArray[0]), function (err, result) {
+                pass1doctype = result.xml.Document_Type;
+            });
+            
+            pass2xml = parser.parseString(fs.readFileSync(bpoElement.fileLocation + path.sep + pass2Folder + path.sep + xmlArray[1]), function (err, result) {
+                pass2doctype = result.xml.Document_Type;
+            });
+            // pass1doctype = xmlArray[0].split('_').pop().replace('.xml','');
+            // pass2doctype = xmlArray[1].split('_').pop().replace('.xml','');
+        }else{
+            pass1xml = parser.parseString(fs.readFileSync(bpoElement.fileLocation + path.sep + pass1Folder + path.sep + xmlArray[0]), function (err, result) {
+                pass1doctype = result.xml.Document_Type;
+            });
+            pass2xml = parser.parseString(fs.readFileSync(bpoElement.fileLocation + path.sep + pass2Folder + path.sep + xmlArray[0]), function (err, result) {
+                pass2doctype = result.xml.Document_Type;
+            });
+            // pass1doctype = xmlArray[0].split('_').pop().replace('.xml','');
+            // pass2doctype = xmlArray[0].split('_').pop().replace('.xml','');
+        }
     let p1 = document.createElement('a');
-    p1.setAttribute('class','list-group-item list-group-item-action');
+    p1.setAttribute('class','indicator list-group-item list-group-item-action');
     p1.setAttribute('href','#');
-    p1.innerHTML = '&#9660 Pass 1';
+    p1.setAttribute('id','indicator1');
+    p1.innerHTML = '&#9660 Pass 1 | Document Type : ' + pass1doctype;
     fieldlist1.append(p1);
     let p2 = document.createElement('a');
-    p2.setAttribute('class','list-group-item list-group-item-action');
+    p2.setAttribute('class','indicator list-group-item list-group-item-action');
     p2.setAttribute('href','#');
-    p2.innerHTML = '&#9660 Pass 2';
+    p2.setAttribute('id','indicator2');
+    p2.innerHTML = '&#9660 Pass 2 | Document Type : ' + pass2doctype;
     fieldlist2.append(p2);
+    if(discrepanciesXMLList[index].split('\|').length > 1){
+        p1.addEventListener('click',()=>{
+            pass2Selected = false;
+            doctype = pass1doctype;
+            p1.setAttribute('style','background-color:greenyellow');
+            p2.removeAttribute('style','background-color:greenyellow');
+            outputFileName = discrepanciesXMLList[index].split('\|')[0];
+        });
+        p2.addEventListener('click',()=>{
+            pass2Selected = true;
+            doctype = pass1doctype;
+            p2.setAttribute('style','background-color:greenyellow');
+            p1.removeAttribute('style','background-color:greenyellow');
+            outputFileName = discrepanciesXMLList[index].split('\|')[1];
+        });
+    }else{
+        doctype = pass1doctype;
+        outputFileName = discrepanciesXMLList[index]
+        if(discrepancies[discrepanciesXMLList[index]] == ""){
+            if(fs.existsSync(bpoElement.fileLocation + path.sep + pass1Folder + path.sep + discrepanciesXMLList[index].split('\|')[0])){
+                pass2Selected = false;
+                doctype = pass1doctype;
+            }else{
+                pass2Selected = true;
+                doctype = pass1doctype;
+            }
+        }
+    }
 }
 
 function getNextElement(){
     clearCurrentImage();
     clearElement();
-    addViewerIndicators();
     initialize();
+    // addViewerIndicators();
     getNextBox.hide();
     getButton.off();
 }
 
-function completeToNextNode(){
+async function completeToNextNode(){
+    await new Promise((resolve)=>{
+        fs.readdir(bpoElement.fileLocation + path.sep + pass1Folder, (err,dir) => {
+        for(let i in dir){
+            let isInOutput = false;
+            for(let key in discrepanciesXMLList){
+                let nameArr = discrepanciesXMLList[key];
+                if(nameArr.includes(dir[i])){
+                    isInOutput = true;
+                    break;
+                }
+            }  
+            if(!isInOutput){
+                let src = bpoElement.fileLocation + path.sep + pass1Folder + path.sep + dir[i];
+                    let dest = bpoElement.fileLocation + path.sep + outputFolder + path.sep + dir[i];
+                    fs.copyFile(src, dest, (err) => {
+                        if (err) throw err;
+                    });
+            }
+        }
+        if(err != null) alert(err);
+            resolve();
+        });
+    });
+
     let completeQuery = config.BPOqueries.completeElement.replace('workerid', workerid)
         .replace('nodeid', nodeID).replace('elementid', elementID).replace('domain',domain)
         .replace('port',port).replace('contextroot',contextRoot).replace('nextnode',config.BPOqueries.nextNodeID);
     $.postJSON(completeQuery,config.BPOqueries.completeInputJSON).done();
+        bpoElement = undefined;
+        completeQuery = undefined;
+        elementID = undefined;
+        if(bpoElement == undefined){
+            getButton.html('Get Next Element?');
+            getNextMsg.html('Element Done');
+            getButton.off();
+            getButton.on('click',getNextElement);
+            getNextBox.show();
+        }
 }
 
 //TODO complete to next node
@@ -598,6 +899,8 @@ $.postJSON = function(url, data, callback) {
         success: callback
     });
 };
+
+
 
 $(document).ready(function(){
     let body = $('body');
@@ -624,30 +927,27 @@ $(document).ready(function(){
             keydown_zoomOut = true;
         }else if(e.key == 'I'){
             keydown_I = true;
-        }else if(e.key == 'F1'){
-            console.log('prev')
-            if(supportIndex > 0){
-                supportIndex--;
-            }else{
-                supportIndex = 0;
-            }
-            loadSupportingImage();
-            //change to previous
-        }else if(e.key == 'F2'){
-            console.log('next')
-            if(supportIndex < supportDocs.length - 1){
-                supportIndex++;
-            }else{
-                supportIndex = supportDocs.length - 1;
-            }
-            loadSupportingImage();
-            //index++ or view supportdocs
-            //change to next
-        }else if(e.key == 'F3'){
-            loadImage();
-        }else if(e.key == 'F6'){
-            console.log('SAVE')
-            checkIfAllDone();
+        }
+        // else if(e.key == 'F1'){
+        //     if(index > 0){
+        //         index--;
+        //     }else{
+        //         index = 0;
+        //     }
+        //     getNextImage();
+        //     //change to previous
+        // }else if(e.key == 'F2'){
+        //     if(index < discrepanciesXMLList.length - 1){
+        //         index++;
+        //     }else{
+        //         index = discrepanciesXMLList.length - 1;
+        //     }
+        //     getNextImage();
+        //     //index++ or view supportdocs
+        //     //change to next
+        // }
+        else if(e.key == 'F6'){
+                checkIfAllDone();
             //save
         }else if(e.key == 'F4'){
             // image.css('width', imagecontainer.width() + 'px ');
@@ -728,6 +1028,8 @@ $(document).ready(function(){
             }
         }
     });
+
+    
     imagecontainer.on('mousewheel', function(e){
         if(e.originalEvent.wheelDelta /120 > 0) {
             // scale += .1;
@@ -848,6 +1150,61 @@ rightDiv.onscroll = function() {
   	leftDiv.scrollTop = this.scrollTop;
   }
   isSyncingRightScroll = false;
+}
+
+checkFilesButton.on('click',()=>{
+    remote.getGlobal('shared').outputFilePath.QA = bpoElement.fileLocation + path.sep + config.outputFolder;
+    remote.getGlobal('shared').outputFilePath.pass1 = bpoElement.fileLocation + path.sep + config.pass1Folder;
+    remote.getGlobal('shared').outputFilePath.pass2 = bpoElement.fileLocation + path.sep + config.pass2Folder;
+    createFileWindow();
+});
+
+addOutputButton.on('click',()=>{
+    remote.getGlobal('shared').bpoElement = bpoElement;
+    remote.getGlobal('shared').imageFileName = currentImage;
+    remote.getGlobal('shared').workerid = workerid;
+    createDataEntryWindow();
+});
+
+//create preview window to show the whole document can be zoomed and rotated
+function createFileWindow(){
+    if(fileWindow == null){
+        fileWindow = new BrowserWindow({parent:remote.getGlobal('mainWindow'),
+        width:500,height:600, resizable:false, webPreferences: { nodeIntegration:true, plugins: true }});
+        fileWindow.loadFile('./src/app/viewer/viewer.html');
+        fileWindow.setMenuBarVisibility(false);
+        fileWindow.on('close',()=>{
+            fileWindow = null;
+            remote.getGlobal('mainWindow').focus();
+        });
+    }
+}
+
+async function createDataEntryWindow(){
+    if(dataEntryWindow == null){
+        let display = electron.screen.getPrimaryDisplay();
+        let width = display.bounds.width;
+        dataEntryWindow = new BrowserWindow({parent:remote.getGlobal('mainWindow'),
+        width:700,height:800,x:width-700,y:0, resizable:false, webPreferences: { nodeIntegration:true, plugins: true }});
+        dataEntryWindow.loadFile('./src/app/data-entry/data-entry.html');
+        dataEntryWindow.setMenuBarVisibility(false);
+        dataEntryWindow.on('close',async ()=>{
+            dataEntryWindow = null;
+            remote.getGlobal('mainWindow').focus();
+            if(remote.getGlobal('shared').imageDone){
+                if(index == discrepanciesXMLList.length - 1){
+                   await completeToNextNode();
+                }else{
+                    index++;
+                    getNextMsg.html('Done');
+                    getButton.html('Get Next Image/File?');
+                    getButton.off();
+                    getButton.on('click',getNextImage);
+                }
+                getNextBox.show();
+            }
+        });
+    }
 }
 
 $(document).ready(initialize);

@@ -1,6 +1,6 @@
 {
   "name": "qa-tool",
-  "version": "1.0.0",
+  "version": "1.2.2",
   "description": "qa tool for data entry",
   "main": "./src/index.js",
   "scripts": {
@@ -22,6 +22,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/jquery": "^3.3.17",
+    "electron": "^6.0.10",
     "electron-builder": "latest"
   },
   "win": {
@@ -36,6 +37,7 @@
   "dependencies": {
     "bootstrap": "^4.1.2",
     "jquery": "^3.3.1",
+    "moment": "^2.24.0",
     "tiff.js": "^1.0.0",
     "xml2js": "^0.4.19",
     "xmlbuilder": "^11.0.0",
